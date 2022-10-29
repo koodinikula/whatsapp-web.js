@@ -698,7 +698,8 @@ class Client extends EventEmitter {
 
         return new Message(this, newMessage);
     }
-
+    
+    
     /**
      * Searches for messages
      * @param {string} query
@@ -825,7 +826,7 @@ class Client extends EventEmitter {
         const couldSet = await this.pupPage.evaluate(async displayName => {
             if(!window.Store.Conn.canSetMyPushname()) return false;
 
-            if(window.Store.MDBackend) {
+            if(window.Store.Features.features.MD_BACKEND) {
                 // TODO
                 return false;
             } else {
@@ -837,6 +838,22 @@ class Client extends EventEmitter {
         return couldSet;
     }
     
+    /**
+     * Sets group's or current user's picture.
+     * @param {string} chatId
+     * @param {MessageMedia} picture
+     * @return {Promise<string>}
+     */
+    async setPicture(chatId, picture){
+        const buffer = Buffer.from(picture.data, 'base64');
+        const cropped = await Util.generateProfilePicture(buffer);
+        const res = await this.pupPage.evaluate(async (chatId, img, preview) => {
+            const wid = window.Store.WidFactory.createWid(chatId);
+            return await window.Store.SendSetPicture(wid, preview, img);
+        }, chatId, cropped.img, cropped.preview);
+        return res.eurl;
+    }
+
     /**
      * Gets the current connection state for the client
      * @returns {WAState} 

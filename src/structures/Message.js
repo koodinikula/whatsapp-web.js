@@ -334,7 +334,8 @@ class Message extends Base {
 
         return this.client.sendMessage(chatId, content, options);
     }
-
+    
+    
     /**
      * React to this message with an emoji
      * @param {string} reaction - Emoji to react with. Send an empty string to remove the reaction.

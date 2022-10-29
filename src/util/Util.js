@@ -6,6 +6,7 @@ const { tmpdir } = require('os');
 const ffmpeg = require('fluent-ffmpeg');
 const webp = require('node-webpmux');
 const fs = require('fs').promises;
+const sharp = require('sharp');
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 /**
@@ -180,6 +181,37 @@ class Util {
      */
     static setFfmpegPath(path) {
         ffmpeg.setFfmpegPath(path);
+    }
+
+    /**
+     * Cropped image to profile's picture size
+     * @param {Buffer} buffer
+     * @return {Promise<{preview: Promise<string>, img: Promise<string>}>}
+     */
+    static async generateProfilePicture(buffer){
+        /**
+         * @param {Sharp} img
+         * @param {number} maxSize
+         * @return {Promise<Sharp>}
+         */
+        const resizeByMax = async (img, maxSize) => {
+            const metadata = await img.metadata();
+            const outputRatio = maxSize/Math.max(metadata.height, metadata.width);
+            return img.resize(Math.floor(metadata.width * outputRatio), Math.floor(metadata.height * outputRatio));
+        };
+        /**
+         * @param {Sharp} img
+         * @return {Promise<string>}
+         */
+        const imgToBase64 = async (img) => {
+            return Buffer.from(await img.toFormat('jpg').toBuffer()).toString('base64');
+        };
+        
+        const img = await sharp(buffer);
+        return {
+            img: await imgToBase64(await resizeByMax(img, 640)),
+            preview: await imgToBase64(await resizeByMax(img, 96))
+        };
     }
 }
 
